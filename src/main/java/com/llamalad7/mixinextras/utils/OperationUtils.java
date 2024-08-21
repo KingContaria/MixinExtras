@@ -22,6 +22,9 @@ public class OperationUtils {
             // The receiver also needs to be a parameter in the INDY descriptor.
             descriptorArgs = ArrayUtils.add(descriptorArgs, 0, Type.getObjectType(classNode.name));
         }
+        if (!captureTargetArgs) {
+            descriptorArgs = ArrayUtils.addAll(descriptorArgs, argTypes);
+        }
         insns.add(new InvokeDynamicInsnNode(
                 // The SAM method will be called `call`
                 "call",
@@ -45,10 +48,6 @@ public class OperationUtils {
                                                  String name, ClassNode classNode, OperationContents contents) {
         // The bridge method's args will consist of any bound parameters followed by an array
 
-        if (captureTargetArgs) {
-            boundParams = ArrayUtils.addAll(boundParams, argTypes);
-        }
-
         MethodNode method = new MethodNode(
                 ASM.API_VERSION,
                 Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC | (virtual ? 0 : Opcodes.ACC_STATIC),
@@ -61,21 +60,25 @@ public class OperationUtils {
                         ArrayUtils.add(boundParams, Type.getType(Object[].class))),
                 null, null
         );
-        final Type[] finalBoundParams = boundParams;
         method.instructions = new InsnList() {{
             // Bound params have to come first.
-            int paramArrayIndex = Arrays.stream(finalBoundParams).mapToInt(Type::getSize).sum() + (virtual ? 1 : 0);
-            // Provide a user-friendly error if the wrong args are passed.
-            add(new VarInsnNode(Opcodes.ALOAD, paramArrayIndex));
-            add(new IntInsnNode(Opcodes.BIPUSH, argTypes.length));
-            add(new LdcInsnNode(Arrays.stream(argTypes).map(Type::getClassName).collect(Collectors.joining(", ", "[", "]"))));
-            add(new MethodInsnNode(
-                    Opcodes.INVOKESTATIC,
-                    Type.getInternalName(WrapOperationRuntime.class),
-                    "checkArgumentCount",
-                    Bytecode.generateDescriptor(void.class, Object[].class, int.class, String.class),
-                    false
-            ));
+            int paramArrayIndex = Arrays.stream(boundParams).mapToInt(Type::getSize).sum() + (virtual ? 1 : 0);
+
+            if (captureTargetArgs) {
+                // Provide a user-friendly error if the wrong args are passed.
+                add(new VarInsnNode(Opcodes.ALOAD, paramArrayIndex));
+                add(new IntInsnNode(Opcodes.BIPUSH, argTypes.length));
+                add(new LdcInsnNode(Arrays.stream(argTypes).map(Type::getClassName).collect(Collectors.joining(", ", "[", "]"))));
+                add(new MethodInsnNode(
+                        Opcodes.INVOKESTATIC,
+                        Type.getInternalName(WrapOperationRuntime.class),
+                        "checkArgumentCount",
+                        Bytecode.generateDescriptor(void.class, Object[].class, int.class, String.class),
+                        false
+                ));
+            } else {
+                Bytecode.loadArgs(argTypes, this, paramArrayIndex);
+            }
 
             if (virtual) {
                 add(new VarInsnNode(Opcodes.ALOAD, 0));
@@ -114,7 +117,7 @@ public class OperationUtils {
                 insns.add(new InsnNode(Opcodes.POP));
                 // Next load the bound params:
                 int boundParamIndex = virtual ? 1 : 0;
-                for (Type boundParamType : finalBoundParams) {
+                for (Type boundParamType : boundParams) {
                     insns.add(new VarInsnNode(boundParamType.getOpcode(Opcodes.ILOAD), boundParamIndex));
                     boundParamIndex += boundParamType.getSize();
                 }
