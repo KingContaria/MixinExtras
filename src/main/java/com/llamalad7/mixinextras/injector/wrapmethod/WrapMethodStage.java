@@ -146,13 +146,11 @@ public abstract class WrapMethodStage {
             InsnList insns = new InsnList();
             allocateShares(sharesToAllocate, insns);
 
-            if (captureTargetArgs) {
-                // Load the params for the handler call;
-                if (!isStatic) {
-                    insns.add(new VarInsnNode(Opcodes.ALOAD, 0));
-                }
-                Bytecode.loadArgs(operationArgs, insns, isStatic ? 0 : 1);
+            // Load the params for the handler call;
+            if (!isStatic) {
+                insns.add(new VarInsnNode(Opcodes.ALOAD, 0));
             }
+            Bytecode.loadArgs(operationArgs, insns, isStatic ? 0 : 1);
 
             // Make the `Operation`:
             if (!isStatic) {

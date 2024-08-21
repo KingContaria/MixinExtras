@@ -29,6 +29,7 @@ public class WrapMethodInjector extends Injector {
         this.checkSignature(target);
         info.addCallbackInvocation(methodNode);
         boolean captureTargetArgs = !(methodArgs.length > 0 && methodArgs[0].equals(operationType));
+        System.out.println(captureTargetArgs);
         WrapMethodApplicatorExtension.offerWrapper(target, methodNode, operationType, shares, captureTargetArgs);
     }
 
