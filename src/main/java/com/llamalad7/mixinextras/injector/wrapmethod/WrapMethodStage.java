@@ -150,10 +150,7 @@ public abstract class WrapMethodStage {
             if (!isStatic) {
                 insns.add(new VarInsnNode(Opcodes.ALOAD, 0));
             }
-
-            if (captureTargetArgs) {
-                Bytecode.loadArgs(operationArgs, insns, isStatic ? 0 : 1);
-            }
+            Bytecode.loadArgs(operationArgs, insns, isStatic ? 0 : 1);
 
             // Make the `Operation`:
             if (!isStatic) {
