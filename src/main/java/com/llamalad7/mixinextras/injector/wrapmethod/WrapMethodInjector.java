@@ -28,7 +28,8 @@ public class WrapMethodInjector extends Injector {
         this.checkTargetModifiers(target, true);
         this.checkSignature(target);
         info.addCallbackInvocation(methodNode);
-        WrapMethodApplicatorExtension.offerWrapper(target, methodNode, operationType, shares);
+        boolean captureTargetArgs = !(methodArgs.length > 0 && methodArgs[0].equals(operationType));
+        WrapMethodApplicatorExtension.offerWrapper(target, methodNode, operationType, shares, captureTargetArgs);
     }
 
     private void checkSignature(Target target) {
@@ -45,7 +46,9 @@ public class WrapMethodInjector extends Injector {
             );
         }
         int argIndex = 0;
-        for (; argIndex < target.arguments.length; argIndex++) {
+        boolean captureTargetArgs = !(methodArgs.length > 0 && methodArgs[0].equals(operationType));
+        int expectedTargetArgs = captureTargetArgs ? target.arguments.length : 0;
+        for (; argIndex < expectedTargetArgs; argIndex++) {
             Type theirType = target.arguments[argIndex];
             if (argIndex >= methodArgs.length) {
                 throw CompatibilityHelper.makeInvalidInjectionException(

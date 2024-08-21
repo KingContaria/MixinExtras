@@ -106,13 +106,15 @@ public abstract class WrapMethodStage {
         private final Type operationType;
         private final List<ShareInfo> shares;
         private final boolean isStatic;
+        private final boolean captureTargetArgs;
 
-        public Wrapper(WrapMethodStage inner, MethodNode handler, Type operationType, List<ShareInfo> shares) {
+        public Wrapper(WrapMethodStage inner, MethodNode handler, Type operationType, List<ShareInfo> shares, boolean captureTargetArgs) {
             this.inner = inner;
             this.handler = handler;
             this.operationType = operationType;
             this.shares = shares;
             this.isStatic = Bytecode.isStatic(handler);
+            this.captureTargetArgs = captureTargetArgs;
         }
 
         @Override
@@ -144,11 +146,13 @@ public abstract class WrapMethodStage {
             InsnList insns = new InsnList();
             allocateShares(sharesToAllocate, insns);
 
-            // Load the params for the handler call;
-            if (!isStatic) {
-                insns.add(new VarInsnNode(Opcodes.ALOAD, 0));
+            if (captureTargetArgs) {
+                // Load the params for the handler call;
+                if (!isStatic) {
+                    insns.add(new VarInsnNode(Opcodes.ALOAD, 0));
+                }
+                Bytecode.loadArgs(operationArgs, insns, isStatic ? 0 : 1);
             }
-            Bytecode.loadArgs(operationArgs, insns, isStatic ? 0 : 1);
 
             // Make the `Operation`:
             if (!isStatic) {
@@ -160,7 +164,7 @@ public abstract class WrapMethodStage {
                             .map(it -> it.getShareType().getImplType())
                             .toArray(Type[]::new);
             OperationUtils.makeOperation(
-                    operationArgs, returnType, insns, !isStatic, trailing,
+                    operationArgs, returnType, insns, !isStatic, captureTargetArgs, trailing,
                     targetClass, operationType, inner.name,
                     (paramArrayIndex, loadArgs) -> {
                         InsnList call = new InsnList();

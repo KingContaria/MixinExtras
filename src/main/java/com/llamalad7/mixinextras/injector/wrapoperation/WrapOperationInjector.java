@@ -118,7 +118,7 @@ class WrapOperationInjector extends Injector {
 
     private void makeOperation(OperationType operation, Type[] argTypes, Type returnType, InsnList insns, boolean hasExtraThis, Type[] trailingParams) {
         OperationUtils.makeOperation(
-                argTypes, returnType, insns, hasExtraThis, trailingParams, classNode, operationType, operation.getName(),
+                argTypes, returnType, insns, hasExtraThis, true, trailingParams, classNode, operationType, operation.getName(),
                 (paramArrayIndex, loadArgs) -> {
                     InsnList copied = new InsnList();
                     operation.copyNode(copied, paramArrayIndex, loadArgs);

@@ -14,7 +14,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class OperationUtils {
-    public static void makeOperation(Type[] argTypes, Type returnType, InsnList insns, boolean virtual,
+    public static void makeOperation(Type[] argTypes, Type returnType, InsnList insns, boolean virtual, boolean captureTargetArgs,
                                      Type[] trailingParams, ClassNode classNode, Type operationType,
                                      String name, OperationContents contents) {
         Type[] descriptorArgs = trailingParams;
@@ -32,7 +32,7 @@ public class OperationUtils {
                 // The SAM method will take an array of args and return an `Object` (the return value of the wrapped call)
                 Type.getMethodType(Type.getType(Object.class), Type.getType(Object[].class)),
                 // The implementation method will be generated for us to handle array unpacking
-                generateSyntheticBridge(argTypes, returnType, virtual, trailingParams, name, classNode, contents),
+                generateSyntheticBridge(argTypes, returnType, virtual, captureTargetArgs, trailingParams, name, classNode, contents),
                 // Specialization of the SAM signature
                 Type.getMethodType(
                         ASMUtils.isPrimitive(returnType) ? Type.getObjectType(returnType == Type.VOID_TYPE ? "java/lang/Void" : Bytecode.getBoxingType(returnType)) : returnType,
@@ -41,9 +41,13 @@ public class OperationUtils {
         ));
     }
 
-    private static Handle generateSyntheticBridge(Type[] argTypes, Type returnType, boolean virtual, Type[] boundParams,
+    private static Handle generateSyntheticBridge(Type[] argTypes, Type returnType, boolean virtual, boolean captureTargetArgs, Type[] boundParams,
                                                  String name, ClassNode classNode, OperationContents contents) {
         // The bridge method's args will consist of any bound parameters followed by an array
+
+        if (captureTargetArgs) {
+            boundParams = ArrayUtils.addAll(boundParams, argTypes);
+        }
 
         MethodNode method = new MethodNode(
                 ASM.API_VERSION,
@@ -57,9 +61,10 @@ public class OperationUtils {
                         ArrayUtils.add(boundParams, Type.getType(Object[].class))),
                 null, null
         );
+        final Type[] finalBoundParams = boundParams;
         method.instructions = new InsnList() {{
             // Bound params have to come first.
-            int paramArrayIndex = Arrays.stream(boundParams).mapToInt(Type::getSize).sum() + (virtual ? 1 : 0);
+            int paramArrayIndex = Arrays.stream(finalBoundParams).mapToInt(Type::getSize).sum() + (virtual ? 1 : 0);
             // Provide a user-friendly error if the wrong args are passed.
             add(new VarInsnNode(Opcodes.ALOAD, paramArrayIndex));
             add(new IntInsnNode(Opcodes.BIPUSH, argTypes.length));
@@ -109,7 +114,7 @@ public class OperationUtils {
                 insns.add(new InsnNode(Opcodes.POP));
                 // Next load the bound params:
                 int boundParamIndex = virtual ? 1 : 0;
-                for (Type boundParamType : boundParams) {
+                for (Type boundParamType : finalBoundParams) {
                     insns.add(new VarInsnNode(boundParamType.getOpcode(Opcodes.ILOAD), boundParamIndex));
                     boundParamIndex += boundParamType.getSize();
                 }
