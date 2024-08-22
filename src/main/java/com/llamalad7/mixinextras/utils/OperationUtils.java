@@ -33,6 +33,8 @@ public class OperationUtils {
                 insns.add(new InsnNode(Opcodes.AASTORE));
                 argParamIndex += argTypes[i].getSize();
             }
+
+            descriptorArgs = ArrayUtils.add(descriptorArgs, Type.getType(Object[].class));
         }
         insns.add(new InvokeDynamicInsnNode(
                 // The SAM method will be called `call`
