@@ -152,8 +152,6 @@ public abstract class WrapMethodStage {
             }
             if (captureTargetArgs) {
                 Bytecode.loadArgs(operationArgs, insns, isStatic ? 0 : 1);
-            } else {
-                wrapper.maxLocals++;
             }
 
             // Make the `Operation`:
@@ -183,6 +181,9 @@ public abstract class WrapMethodStage {
             insns.add(new InsnNode(returnType.getOpcode(Opcodes.IRETURN)));
 
             wrapper.instructions.add(insns);
+            if (!captureTargetArgs) {
+                wrapper.maxStack++;
+            }
             return wrapper;
         }
 
