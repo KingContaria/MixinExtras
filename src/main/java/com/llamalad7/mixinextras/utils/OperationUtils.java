@@ -138,7 +138,7 @@ public class OperationUtils {
                 }
                 loadArgs = insns -> {
                     insns.add(new IntInsnNode(Opcodes.BIPUSH, argTypes.length));
-                    insns.add(new MultiANewArrayInsnNode("java/lang/Object", 1));
+                    insns.add(new MultiANewArrayInsnNode("Ljava/lang/Object", 1));
                     int argParamIndex = paramArrayIndex;
                     for (int i = 0; i < argTypes.length; i++) {
                         insns.add(new InsnNode(Opcodes.DUP));
