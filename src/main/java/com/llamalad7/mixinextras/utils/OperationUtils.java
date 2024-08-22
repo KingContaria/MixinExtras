@@ -137,12 +137,12 @@ public class OperationUtils {
                     add(new VarInsnNode(Opcodes.ALOAD, 0));
                 }
                 loadArgs = insns -> {
-                    insns.add(new IntInsnNode(Opcodes.BIPUSH, argTypes.length));
+                    insns.add(new IntInsnNode(Opcodes.ILOAD, argTypes.length));
                     insns.add(new MultiANewArrayInsnNode("Ljava/lang/Object", 1));
                     int argParamIndex = paramArrayIndex;
                     for (int i = 0; i < argTypes.length; i++) {
                         insns.add(new InsnNode(Opcodes.DUP));
-                        insns.add(new IntInsnNode(Opcodes.BIPUSH, i));
+                        insns.add(new IntInsnNode(Opcodes.ILOAD, i));
                         insns.add(new IntInsnNode(Opcodes.ALOAD, argParamIndex));
                         insns.add(new InsnNode(Opcodes.AASTORE));
                         argParamIndex += argTypes[i].getSize();
