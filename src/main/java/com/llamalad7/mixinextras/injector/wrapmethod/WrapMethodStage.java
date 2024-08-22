@@ -182,7 +182,12 @@ public abstract class WrapMethodStage {
 
             wrapper.instructions.add(insns);
             if (!captureTargetArgs) {
+                vanilla.maxLocals++;
+                vanilla.maxStack++;
                 wrapper.maxStack++;
+                wrapper.maxLocals++;
+                inner.maxStack++;
+                inner.maxLocals++;
             }
             return wrapper;
         }
