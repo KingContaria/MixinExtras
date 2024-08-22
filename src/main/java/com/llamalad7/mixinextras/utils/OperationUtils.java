@@ -130,9 +130,6 @@ public class OperationUtils {
                 }
             };
             add(contents.generate(paramArrayIndex, loadArgs));
-            if (!captureTargetArgs) {
-                add(new InsnNode(Opcodes.POP));
-            }
             if (returnType == Type.VOID_TYPE) {
                 add(new InsnNode(Opcodes.ACONST_NULL));
                 add(new TypeInsnNode(Opcodes.CHECKCAST, "java/lang/Void"));
