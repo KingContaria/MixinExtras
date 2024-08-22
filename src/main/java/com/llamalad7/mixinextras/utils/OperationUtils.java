@@ -121,15 +121,41 @@ public class OperationUtils {
                     }
                 };
             } else {
+                // Provide a user-friendly error if args are passed.
+                add(new VarInsnNode(Opcodes.ALOAD, paramArrayIndex));
+                add(new IntInsnNode(Opcodes.BIPUSH, 0));
+                add(new LdcInsnNode("[]"));
+                add(new MethodInsnNode(
+                        Opcodes.INVOKESTATIC,
+                        Type.getInternalName(WrapOperationRuntime.class),
+                        "checkArgumentCount",
+                        Bytecode.generateDescriptor(void.class, Object[].class, int.class, String.class),
+                        false
+                ));
+
                 if (virtual) {
                     add(new VarInsnNode(Opcodes.ALOAD, 0));
                 }
                 loadArgs = insns -> {
+                    insns.add(new IntInsnNode(Opcodes.BIPUSH, argTypes.length));
+                    insns.add(new MultiANewArrayInsnNode("java/lang/Object", 1));
+                    int argParamIndex = paramArrayIndex;
+                    for (int i = 0; i < argTypes.length; i++) {
+                        insns.add(new InsnNode(Opcodes.DUP));
+                        insns.add(new IntInsnNode(Opcodes.BIPUSH, i));
+                        insns.add(new VarInsnNode(argTypes[i].getOpcode(Opcodes.ALOAD), argParamIndex));
+                        insns.add(new InsnNode(Opcodes.AASTORE));
+                        argParamIndex += argTypes[i].getSize();
+                    }
+
+                    /*
                     int argParamIndex = paramArrayIndex;
                     for (Type argParamType : argTypes) {
                         insns.add(new VarInsnNode(argParamType.getOpcode(Opcodes.ILOAD), argParamIndex));
                         argParamIndex += argParamType.getSize();
                     }
+
+                     */
                     // Next load the bound params:
                     int boundParamIndex = virtual ? 1 : 0;
                     for (Type boundParamType : boundParams) {
@@ -139,6 +165,9 @@ public class OperationUtils {
                 };
             }
             add(contents.generate(paramArrayIndex, loadArgs));
+            if (!captureTargetArgs) {
+                add(new InsnNode(Opcodes.POP));
+            }
             if (returnType == Type.VOID_TYPE) {
                 add(new InsnNode(Opcodes.ACONST_NULL));
                 add(new TypeInsnNode(Opcodes.CHECKCAST, "java/lang/Void"));
