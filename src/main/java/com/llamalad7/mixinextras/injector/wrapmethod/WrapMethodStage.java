@@ -152,6 +152,8 @@ public abstract class WrapMethodStage {
             }
             if (captureTargetArgs) {
                 Bytecode.loadArgs(operationArgs, insns, isStatic ? 0 : 1);
+            } else {
+                wrapper.maxLocals++;
             }
 
             // Make the `Operation`:
