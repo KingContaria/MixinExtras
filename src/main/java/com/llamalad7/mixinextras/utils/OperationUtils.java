@@ -28,7 +28,7 @@ public class OperationUtils {
             insns.add(new MultiANewArrayInsnNode("Ljava/lang/Object", 1));
             for (int i = 0; i < argTypes.length; i++) {
                 insns.add(new InsnNode(Opcodes.DUP));
-                insns.add(new IntInsnNode(Opcodes.ILOAD, i));
+                insns.add(new IntInsnNode(Opcodes.BIPUSH, i));
                 insns.add(new IntInsnNode(Opcodes.ALOAD, argParamIndex));
                 insns.add(new InsnNode(Opcodes.AASTORE));
                 argParamIndex += argTypes[i].getSize();
