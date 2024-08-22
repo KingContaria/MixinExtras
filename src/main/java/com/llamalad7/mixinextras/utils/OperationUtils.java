@@ -24,9 +24,6 @@ public class OperationUtils {
         }
         if (!captureTargetArgs) {
             int argParamIndex = descriptorArgs.length;
-
-            descriptorArgs = ArrayUtils.addAll(descriptorArgs, argTypes);
-
             insns.add(new IntInsnNode(Opcodes.ILOAD, argTypes.length));
             insns.add(new MultiANewArrayInsnNode("Ljava/lang/Object", 1));
             for (int i = 0; i < argTypes.length; i++) {
